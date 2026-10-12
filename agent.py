@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-GROQ_API_KEY = os.getenv("Groak_api").strip()
+GROQ_API_KEY = (os.getenv("Groak_api") or "").strip()
 GROQ_MODEL = "llama-3.3-70b-versatile"
 MAX_TURNS=10
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -24,21 +24,21 @@ _locks={}
 async def ask_llm(promt):
     payload={
         "model":GROQ_MODEL,
-        "message":[{"role":"system", "content":SYSTEM_PROMPT}]+promt,
-        "temprature": 0.65,
-        "max_tocken":700,
+        "messages":[{"role":"system", "content":SYSTEM_PROMPT}]+promt,
+        "temperature": 0.65,
+        "max_tokens":700,
         }
     headers={"Authorization":f"Bearer {GROQ_API_KEY}"}
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             for attempt in range(2):
                 r= await client.post(GROQ_URL,json=payload,headers=headers)
-                if r.status_code == 492 and attempt ==0:
+                if r.status_code == 429 and attempt ==0:
                     await asyncio.sleep(3)
                     continue
                 break
             if r.status_code !=200:
-                print("ERROR WITH TEH GROQ !")
+                print("ERROR WITH TEH GROQ !", r.status_code, r.text)
                 return None
         text = r.json()["choices"][0]["message"]["content"] or ""
         text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()

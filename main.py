@@ -10,6 +10,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import PlainTextResponse, Response
+from agent import get_reply
 
 load_dotenv()  # reads .env locally; on Render the dashboard env vars are used
 
@@ -122,13 +123,20 @@ async def webhook(request: Request, background: BackgroundTasks):
                     text = (message.get("text") or {}).get("body") if mtype == "text" else None
                     log.info("Message from %s: %s", sender, text if text is not None else f"[{mtype}]")
 
-                    reply = f"You said: {text}" if text else f"Got a {mtype} message, I only read text for now."
+                    if text:
+                        background.add_task(reply_with_llm,sender,text)
                     # runs after the 200 is sent, so Meta gets its ack fast
-                    background.add_task(send_message, sender, reply)
+                    else:
+                        background.add_task(send_message, sender, f"Got a {mtype} message, I only read text for now.")
     except Exception:
         log.exception("handler error")
 
     return Response(status_code=200)
+
+
+async def reply_with_llm(sender, text):
+    reply = await get_reply(sender,text)
+    await send_message(sender,reply)
 
 
 async def send_message(to: str, body: str) -> None:

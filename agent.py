@@ -7,7 +7,7 @@ import os
 
 load_dotenv()
 GROQ_API_KEY = (os.getenv("Groak_api") or "").strip()
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-120b"
 MAX_TURNS=10
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 HISTORY_TTL=60*60

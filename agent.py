@@ -26,7 +26,8 @@ async def ask_llm(promt):
         "model":GROQ_MODEL,
         "messages":[{"role":"system", "content":SYSTEM_PROMPT}]+promt,
         "temperature": 0.65,
-        "max_tokens":700,
+        "max_tokens":1500,
+        "reasoning_effort": "medium"
         }
     headers={"Authorization":f"Bearer {GROQ_API_KEY}"}
     try:
